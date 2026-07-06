@@ -9,8 +9,25 @@ import SwiftUI
 import MapKit
 
 struct ContentView: View {
+    let countries: [String] = [
+        "Australia", "Japan", "Indonesia", "Vietnam"
+    ]
+    @State private var selectedCountry: String = "Australia"
+    
     var body: some View {
-        CountryHighlightMap(countryName: "Japan")
+        VStack {
+            VStack {
+                Picker(selection: $selectedCountry, label: Text("Country")) {
+                    ForEach(countries, id: \.self) { country in
+                        Text(country)
+                            .font(.system(size: 30))
+                            .tag(country)
+                    }
+                }
+            }
+            
+            CountryHighlightMap(countryName: selectedCountry)
+        }
         .padding()
     }
 }
@@ -60,7 +77,7 @@ func loadCountryOverlay(named countryName: String) -> [MKOverlay] {
 struct CountryHighlightMap: View {
     @State private var polygons: [MKPolygon] = []
 
-    var countryName: String = "Australia"
+    var countryName: String
     
     var body: some View {
         Map {
@@ -70,16 +87,24 @@ struct CountryHighlightMap: View {
                     .stroke(.blue, lineWidth: 2)
             }
         }
+        .id(countryName)
         .onAppear {
-            let overlays = loadCountryOverlay(named: countryName)
-            polygons = overlays.flatMap { overlay -> [MKPolygon] in
-                if let polygon = overlay as? MKPolygon {
-                    return [polygon]
-                } else if let multi = overlay as? MKMultiPolygon {
-                    return multi.polygons
-                } else {
-                    return []
-                }
+            loadPolygons()
+        }
+        .onChange(of: countryName) { _ in
+            loadPolygons()
+        }
+    }
+    
+    private func loadPolygons() {
+        let overlays = loadCountryOverlay(named: countryName)
+        polygons = overlays.flatMap { overlay -> [MKPolygon] in
+            if let polygon = overlay as? MKPolygon {
+                return [polygon]
+            } else if let multi = overlay as? MKMultiPolygon {
+                return multi.polygons
+            } else {
+                return []
             }
         }
     }
