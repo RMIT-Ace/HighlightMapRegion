@@ -83,7 +83,7 @@ struct CountryHighlightMap: View {
         Map {
             ForEach(polygons.indices, id: \.self) { i in
                 MapPolygon(polygons[i])
-                    .foregroundStyle(.blue.opacity(0.25))
+                    .foregroundStyle(.orange.opacity(0.3))
                     .stroke(.blue, lineWidth: 2)
             }
         }
@@ -107,6 +107,7 @@ struct CountryHighlightMap: View {
                   return []
               }
           }
+        // Need some delay + animation to prevent deadlock-update.
           DispatchQueue.main.async {
               withAnimation {
                   self.polygons = newPolygons
