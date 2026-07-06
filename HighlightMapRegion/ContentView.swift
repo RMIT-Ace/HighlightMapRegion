@@ -10,7 +10,7 @@ import MapKit
 
 struct ContentView: View {
     var body: some View {
-        CountryHighlightMap()
+        CountryHighlightMap(countryName: "Japan")
         .padding()
     }
 }
@@ -60,6 +60,8 @@ func loadCountryOverlay(named countryName: String) -> [MKOverlay] {
 struct CountryHighlightMap: View {
     @State private var polygons: [MKPolygon] = []
 
+    var countryName: String = "Australia"
+    
     var body: some View {
         Map {
             ForEach(polygons.indices, id: \.self) { i in
@@ -69,7 +71,7 @@ struct CountryHighlightMap: View {
             }
         }
         .onAppear {
-            let overlays = loadCountryOverlay(named: "Australia")
+            let overlays = loadCountryOverlay(named: countryName)
             polygons = overlays.flatMap { overlay -> [MKPolygon] in
                 if let polygon = overlay as? MKPolygon {
                     return [polygon]
