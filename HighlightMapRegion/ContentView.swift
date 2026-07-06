@@ -91,23 +91,28 @@ struct CountryHighlightMap: View {
         .onAppear {
             loadPolygons()
         }
-        .onChange(of: countryName) { _ in
+        .onChange(of: countryName) { _, _ in
             loadPolygons()
         }
     }
     
     private func loadPolygons() {
-        let overlays = loadCountryOverlay(named: countryName)
-        polygons = overlays.flatMap { overlay -> [MKPolygon] in
-            if let polygon = overlay as? MKPolygon {
-                return [polygon]
-            } else if let multi = overlay as? MKMultiPolygon {
-                return multi.polygons
-            } else {
-                return []
-            }
-        }
-    }
+          let overlays = loadCountryOverlay(named: countryName)
+          let newPolygons: [MKPolygon] = overlays.flatMap { overlay -> [MKPolygon] in
+              if let polygon = overlay as? MKPolygon {
+                  return [polygon]
+              } else if let multi = overlay as? MKMultiPolygon {
+                  return multi.polygons
+              } else {
+                  return []
+              }
+          }
+          DispatchQueue.main.async {
+              withAnimation {
+                  self.polygons = newPolygons
+              }
+          }
+      }
 }
 
 #Preview {
