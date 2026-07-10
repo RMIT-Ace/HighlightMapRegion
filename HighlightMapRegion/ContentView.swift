@@ -10,7 +10,8 @@ import MapKit
 
 struct ContentView: View {
     let countries: [String] = [
-        "Australia", "Japan", "Indonesia", "Vietnam"
+        "Reset",
+        "Australia", "Japan", "Indonesia", "Vietnam", "China", "Thailand"
     ]
     @State private var selectedCountry: String = "Australia"
     
@@ -79,14 +80,29 @@ struct CountryHighlightMap: View {
 
     var countryName: String
     
+    var randomForegroundColor: Color {
+        let newColor = Color.orange
+        return newColor
+    }
+    
     var body: some View {
         Map {
+            MapPolygon(worldBlankPolygon)
+                .foregroundStyle(Color(white: 0.9))
+                .mapOverlayLevel(level: .aboveLabels)
             ForEach(polygons.indices, id: \.self) { i in
                 MapPolygon(polygons[i])
-                    .foregroundStyle(.orange.opacity(0.3))
-                    .stroke(.blue, lineWidth: 2)
+                    .foregroundStyle(randomForegroundColor)
+                    .stroke(.black, style: StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round))
+                    .mapOverlayLevel(level: .aboveLabels)
             }
         }
+//        .mapStyle(.imagery(elevation: .flat))
+        .mapStyle(.standard(
+            elevation: .flat,
+            emphasis: .muted,
+            pointsOfInterest: .excludingAll,
+            showsTraffic: false))
         .id(countryName)
         .onAppear {
             loadPolygons()
@@ -97,23 +113,38 @@ struct CountryHighlightMap: View {
     }
     
     private func loadPolygons() {
-          let overlays = loadCountryOverlay(named: countryName)
-          let newPolygons: [MKPolygon] = overlays.flatMap { overlay -> [MKPolygon] in
-              if let polygon = overlay as? MKPolygon {
-                  return [polygon]
-              } else if let multi = overlay as? MKMultiPolygon {
-                  return multi.polygons
-              } else {
-                  return []
-              }
-          }
+        if countryName == "Reset" {
+            self.polygons.removeAll()
+            return
+        }
+        
+        let overlays = loadCountryOverlay(named: countryName)
+        let newPolygons: [MKPolygon] = overlays.flatMap { overlay -> [MKPolygon] in
+            if let polygon = overlay as? MKPolygon {
+                return [polygon]
+            } else if let multi = overlay as? MKMultiPolygon {
+                return multi.polygons
+            } else {
+                return []
+            }
+        }
         // Need some delay + animation to prevent deadlock-update.
-          DispatchQueue.main.async {
-              withAnimation {
-                  self.polygons = newPolygons
-              }
-          }
-      }
+        DispatchQueue.main.async {
+            withAnimation {
+                self.polygons += newPolygons
+            }
+        }
+    }
+    
+    let worldBlankPolygon: MKPolygon = {
+        var corners = [
+            CLLocationCoordinate2D(latitude: 90, longitude: -180),
+            CLLocationCoordinate2D(latitude: 90, longitude: 180),
+            CLLocationCoordinate2D(latitude: -90, longitude: 180),
+            CLLocationCoordinate2D(latitude: -90, longitude: -180)
+        ]
+        return MKPolygon(coordinates: &corners, count: corners.count)
+    }()
 }
 
 #Preview {
